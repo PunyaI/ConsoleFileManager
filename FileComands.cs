@@ -19,8 +19,19 @@ namespace ConsoleFileManager
         private static int paging = FileManagerConsole.Properties.Settings.Default.Paging;
         private static List<string> tree_dir = new List<string>();
         private static List<string> list_files = new List<string>();
-        private static string cur_dir;
+        private static string cur_dir = ReadStartDir();
 
+
+        public static void StartProgram()
+        {
+            Directory.CreateDirectory("Error");
+            Directory.CreateDirectory("Config");
+            LogException("Start program." + Environment.NewLine);
+            if (ReadStartDir() != null)                  //если конфиг стартовой директории существует и он не пуст - запускаем программу в нашей последней директории
+            {
+                PrintTree(ReadStartDir());
+            }
+        }
         public static bool Menu()
         {
             Console.WriteLine("Введите команду. Для вызова списка команд введите 'in'. Для выхода из программы введите 'ex'.");
@@ -140,7 +151,7 @@ namespace ConsoleFileManager
         }
         private static bool IsComand(string comand)
         {
-            if (comand != "ls" && comand != "cp" && comand != "rm" && comand != "fl" && comand != "in" && comand != "cl")   //проверяем является ли строка командой и обрабатываем некоторые из них
+            if (comand != "ls" && comand != "cp" && comand != "rm" && comand != "fl" && comand != "in" && comand != "cl" && comand != ".." && comand != "~~")   //проверяем является ли строка командой и обрабатываем некоторые из них
             {
                 Console.WriteLine("Ошибка! Некорректная команда.");
                 return false;
@@ -163,12 +174,26 @@ namespace ConsoleFileManager
                 Console.Clear();
                 return false;
             }
+            else if (comand == "..")
+            {
+                cur_dir = Up(cur_dir);
+                WriteStartDir(cur_dir);                                 //создаем файл и записываем в него последнюю директорию (если файл есть, то перезаписываем в него новую)
+                PrintTree(cur_dir);
+                return false;
+            }
+            else if (comand == "~~")
+            {
+                cur_dir = UpToRoot(cur_dir);
+                WriteStartDir(cur_dir);                                 //создаем файл и записываем в него последнюю директорию (если файл есть, то перезаписываем в него новую)
+                PrintTree(cur_dir);
+                return false;
+            }
             return true;
         }
 
         public static void WriteStartDir(string startdir)          //записываем последнюю директорию в файл для возобновления работы с последнего места
         {
-            File.WriteAllText(start_dir,startdir);
+            File.WriteAllText(start_dir, startdir);
         }
 
 
@@ -176,9 +201,9 @@ namespace ConsoleFileManager
         {
             try                                                  //читаем последнюю директорию из файла, проверяя есть ли вообще этот файл через обработку исключений
             {
-               File.ReadAllText(start_dir);
+                File.ReadAllText(start_dir);
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 LogException(e.Message + " Будет создан новый.");
                 return null;
@@ -266,26 +291,31 @@ namespace ConsoleFileManager
 
         private static void PrintPages(List<string> tree)
         {
-            int allpages = tree.Count / paging+1;
+            if (tree.Count==0 || tree_dir.Count == 0)
+            {
+                return;
+            }
+            int allpages = tree.Count / paging + 1;
             if (tree[0] == tree_dir[0])                          //если выводим дерево каталогов - выводим на консоль также корневой каталог
             {
-                Console.WriteLine("Текущий каталог: " + cur_dir);
+                Console.WriteLine("Текущий каталог: ");
                 Console.WriteLine(" " + cur_dir);
             }
             Page(1, tree);                      //Всегда сначала выводим 1 страницу и спрашиваем что делать дальше, показать другие страницы, или перейти к командам
-            if (allpages == 1)                   //если страница всего одна, то выходим без дальнейшего выбора страниц
+            if (allpages <= 1)                   //если страница всего одна, то выходим без дальнейшего выбора страниц
             {
                 return;
-            } else
+            }
+            else
             {
                 Console.WriteLine("Вы на странице 1. Введите номер страницы, на которую хотите перейти или skip для продолжения работы.");
             }
-            while(true)                                    //цикл вывода страниц по запросу их порядковых номеров, пока не будет введена команда skip для продолжения работы
+            while (true)                                    //цикл вывода страниц по запросу их порядковых номеров, пока не будет введена команда skip для продолжения работы
             {
                 string input = Console.ReadLine();
                 if (Int32.TryParse(input, out int res) && res <= allpages)
                 {
-                    Page(res,tree);
+                    Page(res, tree);
                     Console.WriteLine($"Вы на странице {res}. Введите номер страницы, на которую хотите перейти или skip для продолжения работы.");
                 }
                 else if (input == "skip")
@@ -297,7 +327,7 @@ namespace ConsoleFileManager
                     Console.WriteLine("Ошибка! Такой страницы нет. Введите номер страницы, на которую хотите перейти или skip для продолжения работы.");
                 }
 
-            } 
+            }
         }
 
 
@@ -305,9 +335,13 @@ namespace ConsoleFileManager
         {
             for (int j = (num_page - 1) * paging; j < paging * num_page; j++)          //выводим запрошенную страницу списка
             {
-                if(j<tree.Count)
+                if (j < tree.Count)
                 {
                     Console.WriteLine(tree[j]);
+                }
+                else
+                {
+                    return;
                 }
             }
         }
@@ -379,49 +413,49 @@ namespace ConsoleFileManager
 
         private static void DeleteFIle(FileInfo file)
         {
-                try
-                {                                                                      //удаляем файл и обрабатываем возможные ошибки
-                    file.Delete();
-                    Console.WriteLine("Файл успешно удалён");
-                }
-                catch (SecurityException e)
-                {
-                    LogException(e.Message);
-                    Console.WriteLine("Ошибка! Недостаточно прав для удаления");
-                }
-                catch (IOException e)
-                {
-                    LogException(e.Message);
-                    Console.WriteLine("Ошибка! Перед удалением нужно закрыть файл");
-                }
+            try
+            {                                                                      //удаляем файл и обрабатываем возможные ошибки
+                file.Delete();
+                Console.WriteLine("Файл успешно удалён");
+            }
+            catch (SecurityException e)
+            {
+                LogException(e.Message);
+                Console.WriteLine("Ошибка! Недостаточно прав для удаления");
+            }
+            catch (IOException e)
+            {
+                LogException(e.Message);
+                Console.WriteLine("Ошибка! Перед удалением нужно закрыть файл");
+            }
         }
 
 
         private static void PrintFileInfo(FileInfo file)
         {
-                try                           //вывыодим подробное инфо о запрошенном файле, обрабатывая исключение с ограничением доступа
-                {
-                    Console.WriteLine("_______________________________________________________________________________________________________________________");
-                    Console.WriteLine();
-                    Console.WriteLine("Имя файла:                 " + file.Name);
-                    Console.WriteLine("Расширение файла:          " + file.Extension);
-                    Console.WriteLine("Размер файла:              " + file.Length / 1024 / 1024 + " МБ");
-                    Console.WriteLine("Создан:                    " + file.CreationTime);
-                    Console.WriteLine("Последнее изменение:       " + file.LastWriteTime);
-                    Console.WriteLine("Только для чтения:         " + file.IsReadOnly);
-                    Console.WriteLine("Корневой каталог файла:    " + file.DirectoryName);
-                    Console.WriteLine("_______________________________________________________________________________________________________________________");
-                    Console.WriteLine();
-                }
-                catch(Exception e)
-                {
-                    LogException(e.Message);
-                    Console.WriteLine("Ошибка! Недостаточно прав");
-                }
+            try                           //вывыодим подробное инфо о запрошенном файле, обрабатывая исключение с ограничением доступа
+            {
+                Console.WriteLine("_______________________________________________________________________________________________________________________");
+                Console.WriteLine();
+                Console.WriteLine("Имя файла:                 " + file.Name);
+                Console.WriteLine("Расширение файла:          " + file.Extension);
+                Console.WriteLine("Размер файла:              " + file.Length / 1024 / 1024 + " МБ");
+                Console.WriteLine("Создан:                    " + file.CreationTime);
+                Console.WriteLine("Последнее изменение:       " + file.LastWriteTime);
+                Console.WriteLine("Только для чтения:         " + file.IsReadOnly);
+                Console.WriteLine("Корневой каталог файла:    " + file.DirectoryName);
+                Console.WriteLine("_______________________________________________________________________________________________________________________");
+                Console.WriteLine();
+            }
+            catch (Exception e)
+            {
+                LogException(e.Message);
+                Console.WriteLine("Ошибка! Недостаточно прав");
+            }
         }
 
 
-        public static void PrintDirInfo(DirectoryInfo dir)                                   //выводим инфо о каталоге по аналогии с файлом
+        private static void PrintDirInfo(DirectoryInfo dir)                                   //выводим инфо о каталоге по аналогии с файлом
         {
             Console.WriteLine("Имя каталога:        " + dir.Name);
             Console.WriteLine("Корневой каталог:    " + dir.Parent);
@@ -432,12 +466,26 @@ namespace ConsoleFileManager
                 long size = GetDirectorySize(dir.FullName.ToString()) / 1024 / 1024;
                 Console.WriteLine("Размер каталога:     " + size + " МБ");
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 LogException(e.Message);
                 Console.WriteLine("Размер каталога:       Не удалось измерить. Недостаточно прав.");
             }
 
+        }
+
+
+        private static string UpToRoot(string cur_dir)
+        {
+            DirectoryInfo dir = new DirectoryInfo(cur_dir);
+            return dir.Root.FullName;
+        }
+
+
+        private static string Up(string cur_dir)
+        {
+            DirectoryInfo dir = new DirectoryInfo(cur_dir);
+            return dir.Parent.FullName;
         }
     }
 }
