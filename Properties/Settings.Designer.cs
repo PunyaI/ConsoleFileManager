@@ -23,12 +23,15 @@ namespace FileManagerConsole.Properties {
             }
         }
         
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("20")]
         public int Paging {
             get {
                 return ((int)(this["Paging"]));
+            }
+            set {
+                this["Paging"] = value;
             }
         }
     }
