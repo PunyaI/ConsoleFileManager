@@ -1,5 +1,5 @@
-﻿using System;
-using System.IO;
+﻿using FileManagerConsole;
+using System;
 
 namespace ConsoleFileManager
 {
@@ -8,11 +8,11 @@ namespace ConsoleFileManager
     {
         static void Main(string[] args)
         {
-            FileComands.StartProgram();
+            ServiceOperations.StartProgram();
             bool flag = false;                  //Выводим наш парсер команд после каждого выполнения, пока пользователь не захочет выйти
             do
             {
-                flag = FileComands.Menu();
+                flag = Comands.Menu();
             } while (!flag);
         }
     }
