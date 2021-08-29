@@ -19,13 +19,14 @@ namespace FileManagerConsole
             tree_dir.Clear();
             list_files.Clear();
             Console.WriteLine("_______________________________________________________________________________________________________________________");
-            PrintPages(GetDirs(dir, 3));
+            Console.WriteLine("                                       Дерево каталогов ");
+            PrintPages(GetDirs(dir, 2)); 
             Console.WriteLine("_______________________________________________________________________________________________________________________");
-            Console.WriteLine("                                   Файлы в текущем каталоге");
-            Console.WriteLine();
+            Console.Write("                                   Файлы в текущем каталоге ");
             PrintPages(GetFilesFromDir(dir));
+            Console.WriteLine();
             Console.WriteLine("_______________________________________________________________________________________________________________________");
-            Console.WriteLine("                                        Инфо о каталоге");
+            Console.WriteLine("                                       Инфо о каталоге");
             Console.WriteLine();
             PrintDirInfo(dir);
             Console.WriteLine("_______________________________________________________________________________________________________________________");
@@ -37,19 +38,23 @@ namespace FileManagerConsole
             Console.WriteLine("_______________________________________________________________________________________________________________________");
             Console.WriteLine("                            Информация о доступных командах");
             Console.WriteLine();
-            Console.WriteLine("ls C:\\Source ------------------------ вывод дерева файловой системы по указанному пути");
-            Console.WriteLine("mk Source --------------------------- создание нового каталога 'Source' в текущем каталоге");
-            Console.WriteLine("mk source.txt ----------------------- создание нового файла 'source.txt' в текущем каталоге");
-            Console.WriteLine("cp C:\\Source, D:\\Target ------------- копирование каталога (со всем содержимым)");
-            Console.WriteLine("cp C:\\source.txt, D:\\target.txt ----- копирование файла");
-            Console.WriteLine("rm C:\\Source ------------------------ удаление каталога (со всем содержимым)");
-            Console.WriteLine("rm C:\\source.txt -------------------- удаление файла");
-            Console.WriteLine("fl C:\\source.txt -------------------- вывод содержимого файла");
-            Console.WriteLine("in ---------------------------------- вывод списка команд");
-            Console.WriteLine("ex ---------------------------------- выход из программы");
-            Console.WriteLine("cl ---------------------------------- очистка консоли");
-            Console.WriteLine(".. ---------------------------------- перех на уровень вверх");
-            Console.WriteLine("~~ ---------------------------------- переход в корневой каталог");
+            Console.WriteLine("Для всех команд, где путь указан не полностью (например 'fl source.txt') действия применимы только в текущем каталоге");
+            Console.WriteLine("Для выполнения операции в произвольном каталоге, следует сначала перейти в него с помощью команды 'ls (Полный путь)'");
+            Console.WriteLine();
+            Console.WriteLine("ls C:\\Source --------------------- вывод дерева каталогов по полному пути");
+            Console.WriteLine("ls Source ------------------------ вывод дерева каталогов");
+            Console.WriteLine("mk Source ------------------------ создание нового каталога 'Source' в текущем каталоге");
+            Console.WriteLine("mk source.txt -------------------- создание нового файла 'source.txt' в текущем каталоге");
+            Console.WriteLine("cp Source, D:\\Target ------------- копирование каталога (со всем содержимым)");
+            Console.WriteLine("cp source.txt, D:\\target.txt ----- копирование файла");
+            Console.WriteLine("rm Source ------------------------ удаление каталога (со всем содержимым)");
+            Console.WriteLine("rm source.txt -------------------- удаление файла");
+            Console.WriteLine("fl source.txt -------------------- вывод информации о файле");
+            Console.WriteLine("in ------------------------------- вывод списка команд");
+            Console.WriteLine("ex ------------------------------- выход из программы");
+            Console.WriteLine("cl ------------------------------- очистка консоли");
+            Console.WriteLine(".. ------------------------------- переход на уровень вверх");
+            Console.WriteLine("~~ ------------------------------- переход в корневой каталог");
             Console.WriteLine("_______________________________________________________________________________________________________________________");
         }
 
@@ -84,13 +89,10 @@ namespace FileManagerConsole
                             switch (level)                                                 //добавляем табуляцию для разных уровней вложенности
                             {
                                 case 0:
-                                    tab = "                └─── ";
+                                    tab = "   │       └───";
                                     break;
                                 case 1:
-                                    tab = "        └─── ";
-                                    break;
-                                case 2:
-                                    tab = "   └─ ";
+                                    tab = "   ├──";
                                     break;
                             }
                             tree_dir.Add(tab + dir.Name);                                        //обавляем табулированную строку с каталогом в коллекцию
@@ -117,11 +119,8 @@ namespace FileManagerConsole
                 return;
             }
             int allpages = tree.Count / paging + 1;
-            if (tree[0] == tree_dir[0])                          //если выводим дерево каталогов - выводим на консоль также корневой каталог
-            {
-                Console.WriteLine("Текущий каталог: ");
-                Console.WriteLine(" " + Comands.cur_dir);
-            }
+            Console.WriteLine(/*"Текущий каталог: " + */Comands.cur_dir);
+            Console.WriteLine();
             Page(1, tree);                      //Всегда сначала выводим 1 страницу и спрашиваем что делать дальше, показать другие страницы, или перейти к командам
             if (allpages <= 1)                   //если страница всего одна, то выходим без дальнейшего выбора страниц
             {
@@ -129,23 +128,23 @@ namespace FileManagerConsole
             }
             else
             {
-                Console.WriteLine("Вы на странице 1. Введите номер страницы, на которую хотите перейти или skip для продолжения работы.");
+                Console.WriteLine();
+                Console.WriteLine($"Вы на странице 1 (вывод по {paging} элементов).");
+                Console.WriteLine("Нажмите 'Enter' и введите номер страницы, на которую хотите перейти или 'Esc' для продолжения работы.");
             }
-            while (true)                                    //цикл вывода страниц по запросу их порядковых номеров, пока не будет введена команда skip для продолжения работы
+            while (Console.ReadKey().Key !=ConsoleKey.Escape)                                    //цикл вывода страниц по запросу их порядковых номеров, пока не будет введена команда skip для продолжения работы
             {
                 string input = Console.ReadLine();
                 if (Int32.TryParse(input, out int res) && res <= allpages)
                 {
                     Page(res, tree);
-                    Console.WriteLine($"Вы на странице {res}. Введите номер страницы, на которую хотите перейти или skip для продолжения работы.");
-                }
-                else if (input == "skip")
-                {
-                    return;
+                    Console.WriteLine($"Вы на странице {res} (вывод по {paging} элементов).");
+                    Console.WriteLine("Нажмите 'Enter' и введите номер страницы, на которую хотите перейти или 'Esc' для продолжения работы.");
                 }
                 else
                 {
-                    Console.WriteLine("Ошибка! Такой страницы нет. Введите номер страницы, на которую хотите перейти или skip для продолжения работы.");
+                    Console.WriteLine("Ошибка! Страница не найдена.");
+                    Console.WriteLine("Нажмите 'Enter' и введите номер страницы, на которую хотите перейти или 'Esc' для продолжения работы.");
                 }
 
             }
@@ -168,27 +167,28 @@ namespace FileManagerConsole
         }
 
 
-        internal static void PrintFileInfo(FileInfo file)
+        internal static void PrintFileInfo(string filename)
         {
-            try                           //вывыодим подробное инфо о запрошенном файле, обрабатывая исключение с ограничением доступа
-            {
-                Console.WriteLine("_______________________________________________________________________________________________________________________");
-                Console.WriteLine();
-                Console.WriteLine("Имя файла:                 " + file.Name);
-                Console.WriteLine("Расширение файла:          " + file.Extension);
-                Console.WriteLine("Размер файла:              " + file.Length / 1024 / 1024 + " МБ");
-                Console.WriteLine("Создан:                    " + file.CreationTime);
-                Console.WriteLine("Последнее изменение:       " + file.LastWriteTime);
-                Console.WriteLine("Только для чтения:         " + file.IsReadOnly);
-                Console.WriteLine("Корневой каталог файла:    " + file.DirectoryName);
-                Console.WriteLine("_______________________________________________________________________________________________________________________");
-                Console.WriteLine();
-            }
-            catch (Exception e)
-            {
-                ServiceOperations.LogException(e.Message);
-                Console.WriteLine("Ошибка! Недостаточно прав");
-            }
+                string path = Comands.cur_dir + "\\" + filename;
+                FileInfo file = new FileInfo(path);
+                if (file.Exists)
+                {
+                    Console.WriteLine("_______________________________________________________________________________________________________________________");
+                    Console.WriteLine();
+                    Console.WriteLine("Имя файла:                 " + file.Name);
+                    Console.WriteLine("Расширение файла:          " + file.Extension);
+                    Console.WriteLine("Размер файла:              " + file.Length / 1024 / 1024 + " МБ");
+                    Console.WriteLine("Создан:                    " + file.CreationTime);
+                    Console.WriteLine("Последнее изменение:       " + file.LastWriteTime);
+                    Console.WriteLine("Только для чтения:         " + file.IsReadOnly);
+                    Console.WriteLine("Корневой каталог файла:    " + file.DirectoryName);
+                    Console.WriteLine("_______________________________________________________________________________________________________________________");
+                    Console.WriteLine();
+                }
+                else
+                {
+                    Console.WriteLine($"Ошибка! Файл '{file.FullName}' не найден.");
+                }
         }
 
 

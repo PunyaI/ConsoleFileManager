@@ -53,15 +53,17 @@ namespace ConsoleFileManager
                     path[i] = path[i].Trim();
                 }
             }
-            try
+            if (comand == "ls" && path[0].Contains(":\\"))                           //обрабатываем команду ls, когда ввели полный путь
             {
                 DirectoryInfo dir_source = new DirectoryInfo(path[0]);
-                FileInfo file_source = new FileInfo(path[0]);
-            }
-            catch(Exception e)
-            {
-                ServiceOperations.LogException(e.Message);
-                Console.WriteLine(e.Message);
+                if (path.Length > 1 || !dir_source.Exists)                   
+                {
+                    Console.WriteLine("Ошибка! Некорректный путь");
+                    return false;
+                }
+                cur_dir = dir_source.FullName;
+                ServiceOperations.WriteStartDir(path[0]);                                 //создаем файл и записываем в него последнюю директорию (если файл есть, то перезаписываем в него новую)
+                PrintUI.PrintTree(path[0]);
                 return false;
             }
             ComandFile(comand, path);                                                //обрабатываем все оставшиеся команды работы с файлами
@@ -116,107 +118,113 @@ namespace ConsoleFileManager
 
         private static void ComandFile(string comand, string[] path)                 //парсер команд работы с файловой структурой
         {
-            DirectoryInfo dir_source = new DirectoryInfo(path[0]);
-            FileInfo file_source = new FileInfo(path[0]);
-            switch (comand)                                                             
+            try
             {
-                case "ls":
-                    if (path.Length > 1 || !dir_source.Exists)                   //обрабатываем индивидуальные ошибки ввода пути для каждой команды
-                    {
-                        Console.WriteLine("Ошибка! Некорректный путь");
+                string cur_path = cur_dir + "\\" + path[0];
+                FileAttributes source = File.GetAttributes(cur_path);
+                switch (comand)
+                {
+                    case "ls":                                                        //обрабтываем ls, если ввели директорию без полного пути
+                        cur_dir = cur_path;
+                        ServiceOperations.WriteStartDir(cur_path);                                
+                        PrintUI.PrintTree(cur_path);
                         break;
-                    }
-                    cur_dir = dir_source.FullName;
-                    ServiceOperations.WriteStartDir(path[0]);                                 //создаем файл и записываем в него последнюю директорию (если файл есть, то перезаписываем в него новую)
-                    PrintUI.PrintTree(path[0]);
-                    break;
-                case "cp":
-                    if (path.Length > 1)                                    //т.к. для копирования нужно 2 пути, проверяем сколько ввели путей
-                    {
-
-                        DirectoryInfo file_target = new DirectoryInfo(path[1]);
-                        DirectoryInfo dir_target = new DirectoryInfo(path[1]);
-                        if (file_source.Exists)                                                  //определяем что будем копировать, файл или каталог и вызываем соответствующий метод
+                    case "cp":
+                        if (path.Length > 1)                                    //т.к. для копирования нужно 2 пути, проверяем сколько ввели путей
                         {
-                            FileOperations.CopyFile(file_source, file_target);
+                            if ((source & FileAttributes.Directory) == FileAttributes.Directory)   //определяем что будем копировать, файл или каталог и вызываем соответствующий метод
+                            {
+                                FileOperations.CopyDir(path[0], path[1]);
+                                Console.WriteLine($"Каталог успешно скопирован.");
+
+                            }
+                            else
+                            {
+                                FileOperations.CopyFile(path[0], path[1]);
+                            }
                         }
                         else
-                        if (dir_source.Exists)
                         {
+                            Console.WriteLine("Ошибка! Некорректный ввод. Пути каталогов нужно разделять запятой ','");
+                            break;
+                        };
+                        break;
+                    case "rm":
+                        if (path.Length > 1)
+                        {
+                            Console.WriteLine("Ошибка! Некорректный путь");
+                            break;
+                        }
+                        if ((source & FileAttributes.Directory) == FileAttributes.Directory)
+                        {
+                            FileOperations.DeleteDir(path[0]);
+                        }
+                        else
+                        {
+                            FileOperations.DeleteFIle(path[0]);
+                        }
 
-                            FileOperations.CopyDir(dir_source, dir_target);
-                            Console.WriteLine($"Каталог успешно скопирован.");
+                        break;
+                    case "fl":
+                        if (path.Length == 1)
+                        {
+                            PrintUI.PrintFileInfo(path[0]);
                         }
                         else
                         {
                             Console.WriteLine("Ошибка! Некорректный путь");
                             break;
                         }
-                    }
-                    else
-                    {
-                        Console.WriteLine("Ошибка! Некорректный ввод. Пути каталогов нужно разделять запятой ','");
                         break;
-                    };
-                    break;
-                case "rm":
-                    if (file_source.Exists)
-                    {
-                        FileOperations.DeleteFIle(file_source);
-                    }
-                    else
-                    if (dir_source.Exists)
-                    {
-                        FileOperations.DeleteDir(dir_source);
-                    }
-                    else
-                    {
-                        Console.WriteLine("Ошибка! Некорректный путь");
+                    case "mv":
+                        if (path.Length < 2)
+                        {
+                            Console.WriteLine("Ошибка! Некорректный путь");
+                            break;
+                        }
+                        if ((source & FileAttributes.Directory) == FileAttributes.Directory)
+                        {
+                            FileOperations.MoveDir(path[0], path[1]);
+
+                        }
+                        else
+                        {
+                            FileOperations.MoveFile(path[0], path[1]);
+                        }
                         break;
-                    }
-                    break;
-                case "fl":
-                    if (file_source.Exists)
-                    {
-                        PrintUI.PrintFileInfo(file_source);
-                    }
-                    else
-                    {
-                        Console.WriteLine("Ошибка! Некорректный путь");
-                        break;
-                    }
-                    break;
-                case "mk":
-                    if (path.Length > 1)                   
-                    {
-                        Console.WriteLine("Ошибка! Некорректный путь");
-                        break;
-                    }
-                    if (path[0].Contains("."))
-                    {
-                        FileOperations.CreateFile(path[0]);
-                    }else
-                    {
-                        FileOperations.CreateDir(path[0]);
-                    }
-                    break;
-                case "mv":
-                    string cur_path = cur_dir + "\\" + path[0];
-                    FileInfo source = new FileInfo(cur_path);
-                    if (path.Length < 2)
-                    {
-                        Console.WriteLine("Ошибка! Некорректный путь");
-                        break;
-                    }
-                    if (source.Exists)
-                    {
-                        FileOperations.MoveFile(path[0], path[1]);
-                    } else
-                    {
-                        FileOperations.MoveDir(path[0], path[1]);
-                    }
-                    break;
+                }
             }
+            catch(Exception e)
+            {
+                try
+                {
+                    if (comand == "mk")                                      //команду создания обрабатываем в блоке catch, если введенного файла или директории не существует 
+                    {
+                        if (path.Length > 2)
+                        {
+                            Console.WriteLine("Ошибка! Некорректный путь");
+                            return;
+                        }
+                        if (path[0].Contains("."))
+                        {
+                            FileOperations.CreateFile(path[0]);
+                            return;
+                        }
+                        else
+                        {
+                            FileOperations.CreateDir(path[0]);
+                            return;
+                        }
+                    }
+                }catch
+                {
+                    ServiceOperations.LogException(e.Message);
+                    Console.WriteLine("Ошибка! " + e.Message);
+                }
+                ServiceOperations.LogException(e.Message);
+                Console.WriteLine("Ошибка! " + e.Message);
+            }
+            
         }
 
 
