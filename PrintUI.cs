@@ -120,7 +120,8 @@ namespace FileManagerConsole
                 return;
             }
             int allpages = tree.Count / paging + 1;
-            Console.WriteLine(/*"Текущий каталог: " + */Comands.cur_dir);
+            DirectoryInfo path = new DirectoryInfo(Comands.cur_dir);
+            Console.WriteLine(/*"Текущий каталог: " + */path.FullName);
             Console.WriteLine();
             Page(1, tree);                      //Всегда сначала выводим 1 страницу и спрашиваем что делать дальше, показать другие страницы, или перейти к командам
             if (allpages <= 1)                   //если страница всего одна, то выходим без дальнейшего выбора страниц
@@ -131,21 +132,26 @@ namespace FileManagerConsole
             {
                 Console.WriteLine();
                 Console.WriteLine($"Вы на странице 1 (вывод по {paging} элементов).");
-                Console.WriteLine("Нажмите 'Enter' и введите номер страницы, на которую хотите перейти или 'Esc' для продолжения работы.");
+                Console.WriteLine("Введите номер страницы, на которую хотите перейти или 'skip' для продолжения работы.");
             }
-            while (Console.ReadKey().Key !=ConsoleKey.Escape)                                    //цикл вывода страниц по запросу их порядковых номеров, пока не будет введена команда skip для продолжения работы
+            while (true)                                    //цикл вывода страниц по запросу их порядковых номеров, пока не будет введена команда skip для продолжения работы
             {
                 string input = Console.ReadLine();
                 if (Int32.TryParse(input, out int res) && res <= allpages)
                 {
                     Page(res, tree);
                     Console.WriteLine($"Вы на странице {res} (вывод по {paging} элементов).");
-                    Console.WriteLine("Нажмите 'Enter' и введите номер страницы, на которую хотите перейти или 'Esc' для продолжения работы.");
+                    Console.WriteLine("Введите номер страницы, на которую хотите перейти или 'skip' для продолжения работы.");
+                }
+                else
+                if (input == "skip")
+                {
+                    break;
                 }
                 else
                 {
                     Console.WriteLine("Ошибка! Страница не найдена.");
-                    Console.WriteLine("Нажмите 'Enter' и введите номер страницы, на которую хотите перейти или 'Esc' для продолжения работы.");
+                    Console.WriteLine("Введите номер страницы, на которую хотите перейти или 'skip' для продолжения работы.");
                 }
 
             }
@@ -170,7 +176,8 @@ namespace FileManagerConsole
 
         internal static void PrintFileInfo(string filename)
         {
-                string path = Comands.cur_dir + "\\" + filename;
+            DirectoryInfo cur_path = new DirectoryInfo(Comands.cur_dir);
+            string path = cur_path.FullName + "\\" + filename;
                 FileInfo file = new FileInfo(path);
                 if (file.Exists)
                 {

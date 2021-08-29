@@ -11,12 +11,19 @@ namespace FileManagerConsole
         private static string logs = "Error\\log.txt";
         public static void StartProgram()
         {
-            Directory.CreateDirectory("Error");
-            Directory.CreateDirectory("Config");
-            LogException("Start program." + Environment.NewLine);
-            if (ReadStartDir() != null)                  //если конфиг стартовой директории существует и он не пуст - запускаем программу в нашей последней директории
+            try
             {
-                PrintUI.PrintTree(ReadStartDir());
+                Directory.CreateDirectory("Error");
+                Directory.CreateDirectory("Config");
+                LogException("Start program." + Environment.NewLine);
+                if (ReadStartDir() != null)                  //если конфиг стартовой директории существует и он не пуст - запускаем программу в нашей последней директории
+                {
+                    PrintUI.PrintTree(ReadStartDir());
+                }
+            }
+          catch
+            {
+                WriteStartDir(null);
             }
         }
 

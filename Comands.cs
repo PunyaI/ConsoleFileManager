@@ -156,9 +156,16 @@ namespace ConsoleFileManager
                 switch (comand)
                 {
                     case "ls":                                                        //обрабтываем ls, если ввели директорию без полного пути
-                        cur_dir = cur_path;
-                        ServiceOperations.WriteStartDir(cur_path);                                
-                        PrintUI.PrintTree(cur_path);
+                        if ((source & FileAttributes.Directory) == FileAttributes.Directory)
+                        {
+                            cur_dir = cur_path;
+                            ServiceOperations.WriteStartDir(cur_path);
+                            PrintUI.PrintTree(cur_path);
+                        }else
+                        {
+                            Console.WriteLine("Ошибка! Введите имя каталога, а не файла!");
+                        }
+                            
                         break;
                     case "cp":
                         if (path.Length > 1)                                    //т.к. для копирования нужно 2 пути, проверяем сколько ввели путей
