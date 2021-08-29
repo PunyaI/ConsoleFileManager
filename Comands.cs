@@ -30,10 +30,13 @@ namespace ConsoleFileManager
             {
                 return false;
             }
-            if (ServiceCommand(comand))                                                 //обрабатываем сервисные команды, не требующие пути
+            if (value.Length == 2)
             {
-                return false; 
-            }    
+                if (ServiceCommand(comand))                                                 //обрабатываем сервисные команды, не требующие пути
+                {
+                    return false;
+                }
+            }  
             if (value.Length <= 3)                                                         //проверяем есть ли путь для оставшихся команд
             {
                 Console.WriteLine("Ошибка! Некорректная команда.");
@@ -53,23 +56,41 @@ namespace ConsoleFileManager
                     path[i] = path[i].Trim();
                 }
             }
-            if (comand == "ls" && path[0].Contains(":\\"))                           //обрабатываем команду ls, когда ввели полный путь
+            if(!FullComandLS(comand,path))                                          //обрабатываем команду ls, если ввели полный путь
             {
-                DirectoryInfo dir_source = new DirectoryInfo(path[0]);
-                if (path.Length > 1 || !dir_source.Exists)                   
-                {
-                    Console.WriteLine("Ошибка! Некорректный путь");
-                    return false;
-                }
-                cur_dir = dir_source.FullName;
-                ServiceOperations.WriteStartDir(path[0]);                                 //создаем файл и записываем в него последнюю директорию (если файл есть, то перезаписываем в него новую)
-                PrintUI.PrintTree(path[0]);
                 return false;
             }
             ComandFile(comand, path);                                                //обрабатываем все оставшиеся команды работы с файлами
             return false;
         }
+        
 
+        private static bool FullComandLS(string comand, string [] path)
+        {
+            if (comand == "ls" && path[0].Contains(":\\"))                           //обрабатываем команду ls, когда ввели полный путь
+            {
+                try
+                {
+                    DirectoryInfo dir_source = new DirectoryInfo(path[0]);
+                    if (path.Length > 1 || !dir_source.Exists)
+                    {
+                        Console.WriteLine("Ошибка! Некорректный путь");
+                        return false;
+                    }
+                    cur_dir = dir_source.FullName;
+                    ServiceOperations.WriteStartDir(path[0]);                                 //создаем файл и записываем в него последнюю директорию (если файл есть, то перезаписываем в него новую)
+                    PrintUI.PrintTree(path[0]);
+                    return false;
+                }
+                catch (Exception e)
+                {
+                    ServiceOperations.LogException(e.Message);
+                    Console.WriteLine("Ошибка! Некорректный путь");
+                    return false;
+                }
+            }
+            return true;
+        }
 
         private static bool IsComand(string comand)
         {
@@ -111,6 +132,16 @@ namespace ConsoleFileManager
                     ServiceOperations.WriteStartDir(cur_dir);                                 //создаем файл и записываем в него последнюю директорию (если файл есть, то перезаписываем в него новую)
                     PrintUI.PrintTree(cur_dir);
                     return true;
+                case "ls":
+                    if(cur_dir != null)
+                    {
+                        PrintUI.PrintTree(cur_dir);
+                    } else
+                    {
+                        Console.WriteLine("Ошибка! Текущий путь ещё не задан.");
+                    }
+                    return true;
+
             }
             return false;
         }
