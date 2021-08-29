@@ -46,8 +46,8 @@ namespace FileManagerConsole
             Console.WriteLine("ls C:\\Source --------------------- вывод дерева каталогов по полному пути");
             Console.WriteLine("mk Source ------------------------ создание нового каталога 'Source' в текущем каталоге");
             Console.WriteLine("mk source.txt -------------------- создание нового файла 'source.txt' в текущем каталоге");
-            Console.WriteLine("cp Source, D:\\Target ------------- копирование каталога (со всем содержимым)");
-            Console.WriteLine("cp source.txt, D:\\target.txt ----- копирование файла");
+            Console.WriteLine("cp Source, D:\\-------------------- копирование каталога (со всем содержимым) в указанный каталог");
+            Console.WriteLine("cp source.txt, D:\\---------------- копирование файла в указанный каталог");
             Console.WriteLine("rm Source ------------------------ удаление каталога (со всем содержимым)");
             Console.WriteLine("rm source.txt -------------------- удаление файла");
             Console.WriteLine("fl source.txt -------------------- вывод информации о файле");

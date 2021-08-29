@@ -163,15 +163,21 @@ namespace ConsoleFileManager
                     case "cp":
                         if (path.Length > 1)                                    //т.к. для копирования нужно 2 пути, проверяем сколько ввели путей
                         {
+                            string target = path[1] + "\\" + path[0];
+                            
                             if ((source & FileAttributes.Directory) == FileAttributes.Directory)   //определяем что будем копировать, файл или каталог и вызываем соответствующий метод
                             {
-                                FileOperations.CopyDir(path[0], path[1]);
+                                DirectoryInfo dir = new DirectoryInfo(cur_path);
+                                DirectoryInfo dirtarget = new DirectoryInfo(target);
+                                FileOperations.CopyDir(dir,dirtarget);
                                 Console.WriteLine($"Каталог успешно скопирован.");
-
                             }
                             else
                             {
-                                FileOperations.CopyFile(path[0], path[1]);
+                                string target_file = path[1] + "\\" + path[0];
+                                FileInfo file = new FileInfo(cur_path);
+                                DirectoryInfo file_target = new DirectoryInfo(target_file);
+                                FileOperations.CopyFile(file, file_target) ;
                             }
                         }
                         else

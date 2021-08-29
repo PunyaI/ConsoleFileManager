@@ -7,41 +7,37 @@ namespace FileManagerConsole
 {
     internal class FileOperations
     {
-        internal static void CopyDir(string dir_source, string dir_target)
+        internal static void CopyDir(DirectoryInfo dir_source, DirectoryInfo dir_target)
         {
-            string cur_path = Comands.cur_dir + "\\" + dir_source;
-            DirectoryInfo dir = new DirectoryInfo(cur_path);
-            DirectoryInfo dirtarget = new DirectoryInfo(dir_target);
-            if (dir.FullName.ToLower() == dirtarget.FullName.ToLower())               //если исходная и целевая директория совпадают - делаем копию директории
+
+            if (dir_source.FullName.ToLower() == dir_target.FullName.ToLower())               //если исходная и целевая директория совпадают - делаем копию директории
             {
                 DirectoryInfo dir_target_copy = new DirectoryInfo(dir_target + "-copy");
-                dir_target = dir_target_copy.ToString();
+                dir_target = dir_target_copy;
                 Console.WriteLine("Каталоги совпадают, будет создан каталог " + dir_target_copy.Name);
             }
-            if (!Directory.Exists(dir_target))                                     //если целевой директории не существует - создаем её
+            if (!Directory.Exists(dir_target.FullName))                                     //если целевой директории не существует - создаем её
             {
-                Directory.CreateDirectory(dir_target);
+                Directory.CreateDirectory(dir_target.FullName);
             }
-            foreach (FileInfo file in dir.GetFiles())                                 //копируем всё файлы из текущей директории в целевую
+            foreach (FileInfo file in dir_source.GetFiles())                                 //копируем всё файлы из текущей директории в целевую
             {
-                file.CopyTo(Path.Combine(dir.ToString(), file.Name), true);
+                file.CopyTo(Path.Combine(dir_source.ToString(), file.Name), true);
             }
-            foreach (DirectoryInfo source_subdir in dir.GetDirectories())            //рекурсивно копируем все вложенные директории и файлы в них
+            foreach (DirectoryInfo source_subdir in dir_source.GetDirectories())            //рекурсивно копируем все вложенные директории и файлы в них
             {
-                DirectoryInfo next_target_subdir = dirtarget.CreateSubdirectory(source_subdir.Name);
-                CopyDir(source_subdir.Name, next_target_subdir.FullName);
+                DirectoryInfo next_target_subdir = dir_target.CreateSubdirectory(source_subdir.Name);
+                CopyDir(source_subdir, next_target_subdir);
             }
 
         }
 
 
-        internal static void CopyFile(string file, string file_target)
+        internal static void CopyFile(FileInfo file, DirectoryInfo file_target)
         {
-            string cur_path = Comands.cur_dir + "\\" + file;
-            FileInfo cur_file = new FileInfo(cur_path);
-            DirectoryInfo cur_target = new DirectoryInfo(file_target);
-            cur_file.CopyTo(file_target.ToString(), true);
-            Console.WriteLine($"Файл '{cur_file.Name}' скопирован в каталог '{cur_target.Parent}'.");
+
+            file.CopyTo(file_target.ToString(), true);
+            Console.WriteLine($"Файл '{file.Name}' успешно скопирован в каталог '{file_target.FullName}'.");
         }
 
 
